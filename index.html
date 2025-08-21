@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWLSB Calendar Exporter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+<style>
+/* Base Styles */
+body {
+    font-family: 'Quicksand', sans-serif;
+    background-color: #f0f4f7;
+    margin: 0;
+    padding: 20px;
+    color: #003366;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+main {
+    max-width: 1200px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    display: none;
+    position: relative;
+    z-index: 2;
+    animation: fadeIn 1s ease-in-out forwards;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+h1 {
+    color: #003366;
+    font-weight: 700;
+    font-size: 2.8em;
+    margin-bottom: 10px;
+    text-align: center;
+}
+h2 {
+    color: #004d99;
+    font-weight: 500;
+    font-size: 1.8em;
+    margin-top: 30px;
+    border-bottom: 1px solid #c0d1d1;
+    padding-bottom: 5px;
+    text-align: center;
+}
+p {
+    color: #003366;
+    line-height: 1.6;
+}
+.hidden {
+    display: none !important;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+th, td {
+    padding: 12px;
+    text-align: center;
+}
+th {
+    background-color: #003366;
+    color: white;
+    font-weight: 500;
+}
+tbody tr:nth-child(even) { background-color: #e0eaf3; }
+tbody tr.instructional { background-color: #e3f1f1; }
+tbody tr.skipday { background-color: #004d99; color: white; }
+input, select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #c0d1d1;
+    box-sizing: border-box;
+    font-family: 'Quicksand', sans-serif;
+    background-color: #fcfdfe;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+input:focus, select:focus {
+    border-color: #004d99;
+    box-shadow: 0 0 5px rgba(0, 77, 153, 0.2);
+    outline: none;
+}
+button {
+    padding: 12px 25px;
+    margin-top: 15px;
+    cursor: pointer;
+    background-color: #004d99;
+    border: none;
+    color: white;
+    font-size: 1.1em;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+button:hover { background-color: #002d66; }
+button:active { transform: scale(0.98); }
+button:disabled { background-color: #c0d1d1; cursor: not-allowed; }
+#fullScheduleTable { table-layout: fixed; }
+table th, table td { word-wrap: break-word; }
+#groupManager { margin-bottom: 20px; }
+#groupManager input { width: auto; margin-right: 10px; }
+#groupList { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+.group-tag {
+    background-color: #003366;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+.group-tag span { margin-right: 5px; }
+.group-tag button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 0;
+    margin: 0;
+}
+.created-by {
+    text-align: center;
+    margin-top: 50px;
+    color: #004d99;
+    font-size: 0.9em;
+}
+.colored-cell {
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+    color: #003366;
+}
+.hidden-by-role {
+    display: none !important;
+}
+.header-text {
+    max-width: 800px;
+    margin: 0 auto 30px;
+    text-align: center;
+    font-size: 1.1em;
+    color: #003366;
+}
+.step-container {
+    margin-bottom: 40px;
+}
+.step-container h2 {
+    text-align: left;
+    margin-top: 0;
+}
+.step-container p {
+    text-align: left;
+}
+.calendar-import-instructions .instructions-content {
+    background-color: #f7f9fc;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 10px;
+}
+.instructions-content h3 {
+    margin-top: 0;
+    color: #004d99;
+    font-size: 1.4em;
+}
+.instructions-content p {
+    margin-bottom: 15px;
+}
+.instructions-content a {
+    color: #004d99;
+    font-weight: bold;
+}
+.instructions-content a:hover {
+    text-decoration: underline;
+}
+.toggle-instructions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.toggle-instructions button {
+    background-color: #003366;
+    color: white;
+    padding: 10px 15px;
+    font-size: 1em;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+}
+.toggle-instructions button.active {
+    background-color: #004d99;
+}
+.toggle-instructions button:hover {
+    background-color: #002d66;
+}
+
+/* Modal and Animation Styles */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s, visibility 0.5s;
+}
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+.modal-content {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    text-align: center;
+    transform: scale(0.9);
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s;
+    width: 90%;
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.modal-content.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+.modal-content h3 {
+    margin-top: 0;
+    color: #003366;
+    font-weight: 600;
+    font-size: 2em;
+}
+.modal-content .app-name {
+    font-size: 0.9em;
+    color: #004d99;
+    margin-top: -10px;
+    margin-bottom: 20px;
+}
+.modal-content label {
+    display: block;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+.modal-content input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #c0d1d1;
+    box-sizing: border-box;
+    font-family: 'Quicksand', sans-serif;
+    background-color: #f7f9fc;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+input:focus {
+    border-color: #004d99;
+    box-shadow: 0 0 5px rgba(0, 77, 153, 0.2);
+    outline: none;
+}
+.button-group {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    gap: 10px;
+}
+.button-group button {
+    flex: 1;
+}
+button {
+    padding: 12px 25px;
+    margin-top: 20px;
+    cursor: pointer;
+    background-color: #004d99;
+    border: none;
+    color: white;
+    font-size: 1.1em;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+button.back-button {
+    background-color: #003366;
+}
+button:hover { background-color: #002d66; }
+button:active { transform: scale(0.98); }
+button:disabled {
+    background-color: #c0d1d1;
+    cursor: not-allowed;
+}
+
+/* Clickable Box styles for school and role selection */
+.clickable-box-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+.clickable-box {
+    padding: 15px 20px;
+    border: 2px solid #003366;
+    border-radius: 10px;
+    cursor: pointer;
+    background-color: #f7f9fc;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    flex: 1 1 30%;
+    text-align: center;
+    font-weight: 500;
+    color: #003366;
+}
+.clickable-box:hover {
+    background-color: #e0eaf3;
+    border-color: #004d99;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.clickable-box.selected {
+    background-color: #004d99;
+    border-color: #003366;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.back-to-modal-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    background-color: #004d99;
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+.back-to-modal-btn:hover {
+    background-color: #002d66;
+}
+
+.export-group {
+    margin-bottom: 20px;
+}
+
+.export-group h3 {
+    text-align: center;
+    color: #003366;
+}
+
+.export-group .button-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+</style>
+</head>
+<body>
+<div id="welcomeModal" class="modal">
+    <div class="modal-content active" id="step1">
+        <h3>Welcome! 👋</h3>
+        <p class="app-name">SWLSB Calendar Exporter for the 2025-2026 School Year</p>
+        <p>Let's get started! What's your name? 🧑‍🏫</p>
+        <form id="step1Form">
+            <label for="userName">Your Name:</label>
+            <input type="text" id="userName" required>
+            <button type="submit">Next 👉</button>
+        </form>
+        <div class="created-by">Created by Andrew Laplante</div>
+    </div>
+    <div class="modal-content" id="step2">
+        <h3>Choose Your School 🏫</h3>
+        <p>Select your school from the list below:</p>
+        <div class="clickable-box-group" id="schoolSelection">
+            <div class="clickable-box" data-value="MHS">MHS</div>
+            <div class="clickable-box" data-value="SAA (Secondary)">SAA (Secondary)</div>
+            <div class="clickable-box" data-value="LRHS">LRHS</div>
+            <div class="clickable-box" data-value="RHS">RHS</div>
+            <div class="clickable-box" data-value="JHS">JHS</div>
+            <div class="clickable-box" data-value="LTM">LTM</div>
+            <div class="clickable-box" data-value="Laval (Senior)">Laval (Senior)</div>
+            <div class="clickable-box" data-value="Laval (Junior)">Laval (Junior)</div>
+        </div>
+        <div class="button-group">
+            <button id="step2Back" class="back-button">Go Back 👈</button>
+            <button id="step2Next">Next 👉</button>
+        </div>
+    </div>
+    <div class="modal-content" id="step2WIP">
+        <h3>Work in Progress 🚧</h3>
+        <p>This tool currently only supports MHS, SAA (Secondary), and LTM. We are working on adding support for other schools soon. 🙏</p>
+        <button id="step2WIPBack">Go Back 👈</button>
+    </div>
+    <div class="modal-content" id="step3">
+        <h3>Almost there! 🎉</h3>
+        <p>Are you a teacher or a student? 📚</p>
+        <div class="clickable-box-group" id="roleSelection">
+            <div class="clickable-box" data-value="teacher">Teacher</div>
+            <div class="clickable-box" data-value="student">Student</div>
+        </div>
+        <div class="button-group">
+            <button id="step3Back" class="back-button">Go Back 👈</button>
+            <button id="step3Next">Let's Go! 🚀</button>
+        </div>
+    </div>
+</div>
+
+<main id="mainContent" class="hidden">
+    <button class="back-to-modal-btn" id="mainGoBack">Go Back 👈</button>
+    <h1 id="mainTitle">SWLSB Calendar Exporter</h1>
+    <p class="header-text">
+        This tool helps you create a customizable calendar based on the SWLSB 9-day cycle and export it to your personal calendar application. Follow the steps below to get started.
+    </p>
+    
+    <div class="step-container">
+        <h2 id="step1Title"><strong>Step 1:</strong> Define Your Subjects 📝</h2>
+        <p id="step1Instructions">Enter your classes or subjects below. Click "Add Subject" to save them for the schedule input in the next step.</p>
+        <div id="groupManager">
+            <input type="text" id="newGroupInput" placeholder="e.g. Science Sec 4A">
+            <button id="addGroupBtn">Add Subject</button>
+        </div>
+        <div id="groupList"></div>
+    </div>
+
+    <div class="step-container hidden" id="mhsBellSchedule">
+        <h2><strong>Step 2:</strong> Input Bell Schedule ⏰</h2>
+        <p>Since Mountainview High School's bell schedule is not publicly available, please enter it below. Students can skip this step if they are not sure.</p>
+        <table id="mhsBellTable">
+            <thead>
+                <tr>
+                    <th>Block</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="step-container">
+        <h2 id="step2Title"><strong>Step 2:</strong> Input Your Schedule 📅</h2>
+        <p id="step2Instructions">Fill in the blocks with your subjects for each day of the 9-day cycle. Select from the dropdown menus or type in other activities.</p>
+
+        <table id="templateTable">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    
+    <div class="step-container">
+        <h2><strong>Step 3:</strong> Generate and Preview ✨</h2>
+        <p>Click the button below to generate your full school year calendar and preview it before exporting.</p>
+        <button id="generateScheduleBtn">Generate Schedule</button>
+    </div>
+
+    <div class="step-container">
+        <h2 id="step4Title"><strong>Step 4:</strong> Export Options 📥</h2>
+        <p id="step4Instructions">
+            Now that the schedule is generated, you can download the calendar events as a CSV or .ics file.
+        </p>
+        <div class="export-options">
+            <div class="export-group">
+                <h3>Google / Outlook (CSV Files)</h3>
+                <div class="button-container">
+                    <button id="exportCsvMono">Download as a Single File</button>
+                    <button id="exportCsvMulti">Download Multiple Files (One for Each Class)</button>
+                </div>
+            </div>
+            <div class="export-group">
+                <h3>Apple / Other (ICS Files)</h3>
+                <div class="button-container">
+                    <button id="exportIcsMono">Download as a Single File</button>
+                    <button id="exportIcsMulti">Download Multiple Files (One for Each Class)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="step-container calendar-import-instructions">
+        <h2 id="step5Title"><strong>Step 5:</strong> Import to Your Calendar ↗️</h2>
+        <p id="step5Instructions">
+            Choose your preferred calendar application below to view the instructions for importing the file you just downloaded.
+            We highly recommend creating a <strong>new, dedicated calendar</strong> for this schedule to avoid mixing it with your personal events.
+        </p>
+        <div class="toggle-instructions">
+            <button data-calendar="google">Google Calendar</button>
+            <button data-calendar="outlook">Outlook</button>
+            <button data-calendar="apple">Apple Calendar</button>
+        </div>
+        <div class="instructions-content hidden" id="google-instructions">
+            <h3>Google Calendar Instructions</h3>
+            <p>1. Open Google Calendar on your computer and click the <strong>gear icon</strong> in the top right, then select <strong>"Settings"</strong>.</p>
+            <p>2. In the left-hand menu, click on <strong>"Import & Export"</strong>.</p>
+            <p>3. Click <strong>"Select file from your computer"</strong> and choose the CSV or .ics file you downloaded.</p>
+            <p>4. Choose the calendar to add the events to (or create a new one) and click <strong>"Import"</strong>.</p>
+            <p>For a detailed walkthrough, watch this video:</p>
+            <p><a href="https://www.youtube.com/watch?v=ba_TDkghpdc" target="_blank">Import Multiple Events From a CSV file into Google Calendar</a></p>
+        </div>
+        <div class="instructions-content hidden" id="outlook-instructions">
+            <h3>Outlook Instructions</h3>
+            <p>1. In Outlook on your computer, go to <strong>"File"</strong>, then <strong>"Open & Export"</strong>, and select <strong>"Import/Export"</strong>.</p>
+            <p>2. From the wizard, choose <strong>"Import from another program or file"</strong> and click <strong>"Next"</strong>.</p>
+            <p>3. Select <strong>"Comma Separated Values"</strong> as the file type and click <strong>"Next"</strong>.</p>
+            <p>4. Browse to find your downloaded CSV file and click <strong>"Next"</strong>.</p>
+            <p>5. Choose a destination folder (a new calendar you've created is best) and click <strong>"Next"</strong>.</p>
+            <p>For a detailed walkthrough, watch this video:</p>
+            <p><a href="https://www.youtube.com/watch?v=O30oZc-b4VI" target="_blank">Import a CSV file into Outlook calendar</a></p>
+        </div>
+        <div class="instructions-content hidden" id="apple-instructions">
+            <h3>Apple Calendar Instructions</h3>
+            <p>1. Open the <strong>Calendar</strong> application on your Mac.</p>
+            <p>2. From the menu bar, select <strong>File > Import...</strong></p>
+            <p>3. Choose the `.ics` or CSV file you downloaded and click <strong>Import</strong>.</p>
+            <p>4. A dialog box will appear. Select the calendar you want to import the events into, and click <strong>OK</strong>.</p>
+            <p>If you prefer a multi-color setup, you can still follow the instructions for importing a CSV file into Google Calendar first, then exporting the `.ics` from there to import into Apple Calendar.</p>
+        </div>
+    </div>
+
+    <div class="step-container">
+        <h2 id="step6Title"><strong>Step 6:</strong> Full Schedule Preview 🗓️</h2>
+        <table id="fullScheduleTable">
+            <thead>
+                <tr>
+                    <th>Date</th><th>DayOfWeek</th><th>CycleDay</th><th>Activity</th><th>Start</th><th>End</th><th>Special Events</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+// === User Variables and Local Storage ===
+let userName = "";
+let userSchool = "";
+let userRole = "";
+let groups = [];
+let templateSchedule = Array.from({ length: 9 }, () => []);
+let mhsBellSchedule = {};
+const schoolYear = "2025-2026";
+
+function saveState() {
+    localStorage.setItem('userName', userName);
+    localStorage.setItem('userSchool', userSchool);
+    localStorage.setItem('userRole', userRole);
+    localStorage.setItem('groups', JSON.stringify(groups));
+    localStorage.setItem('templateSchedule', JSON.stringify(templateSchedule));
+    localStorage.setItem('mhsBellSchedule', JSON.stringify(mhsBellSchedule));
+}
+
+function loadState() {
+    userName = localStorage.getItem('userName') || "";
+    userSchool = localStorage.getItem('userSchool') || "";
+    userRole = localStorage.getItem('userRole') || "";
+    try {
+        groups = JSON.parse(localStorage.getItem('groups')) || [];
+        templateSchedule = JSON.parse(localStorage.getItem('templateSchedule')) || Array.from({ length: 9 }, () => []);
+        mhsBellSchedule = JSON.parse(localStorage.getItem('mhsBellSchedule')) || {};
+    } catch (e) {
+        console.error("Failed to parse local storage data, resetting.", e);
+        groups = [];
+        templateSchedule = Array.from({ length: 9 }, () => []);
+        mhsBellSchedule = {};
+    }
+}
+
+// === Bell times for specific schools ===
+const saaBellTimes = {
+    "AM Supervision":["08:45","09:15"],
+    "Period 1":["09:15","10:30"],
+    "Break":["10:30","10:45"],
+    "Period 2":["10:45","12:00"],
+    "Short Lunch":["12:00","12:30"],
+    "Period 3":["12:30","13:45"],
+    "Long Lunch/ECA":["13:45","14:45"],
+    "Transition":["14:45","14:50"],
+    "Period 4":["14:50","16:05"],
+    "PM Supervision":["16:05","16:20"]
+};
+
+const ltmBellTimes = {
+    "Warning Bell": ["07:50", "07:53"],
+    "Period 1": ["07:53", "09:08"],
+    "Recess 1": ["09:08", "09:18"],
+    "Period 2": ["09:21", "10:36"],
+    "Recess 2": ["10:36", "10:46"],
+    "Period 3": ["10:49", "12:04"],
+    "Lunch": ["12:04", "12:57"],
+    "Period 4": ["13:00", "14:15"]
+};
+
+// === Elements ===
+const welcomeModal = document.getElementById("welcomeModal");
+const mainContent = document.getElementById("mainContent");
+const step1Content = document.getElementById("step1");
+const step2Content = document.getElementById("step2");
+const step2WIPContent = document.getElementById("step2WIP");
+const step3Content = document.getElementById("step3");
+const step1Form = document.getElementById("step1Form");
+const step2NextBtn = document.getElementById("step2Next");
+const step2BackBtn = document.getElementById("step2Back");
+const step2WIPBackBtn = document.getElementById("step2WIPBack");
+const step3NextBtn = document.getElementById("step3Next");
+const step3BackBtn = document.getElementById("step3Back");
+const mainGoBackBtn = document.getElementById("mainGoBack");
+const schoolSelectionDiv = document.getElementById("schoolSelection");
+const roleSelectionDiv = document.getElementById("roleSelection");
+const mainTitle = document.getElementById("mainTitle");
+const headerText = document.querySelector(".header-text");
+const newGroupInput = document.getElementById("newGroupInput");
+const addGroupBtn = document.getElementById("addGroupBtn");
+const groupListDiv = document.getElementById("groupList");
+const templateHead = document.querySelector("#templateTable thead");
+const templateBody = document.querySelector("#templateTable tbody");
+const fullScheduleTable = document.querySelector("#fullScheduleTable tbody");
+const templateTable = document.getElementById("templateTable");
+const mhsBellScheduleDiv = document.getElementById("mhsBellSchedule");
+const mhsBellTableBody = document.querySelector("#mhsBellTable tbody");
+const step1Title = document.getElementById("step1Title");
+const step1Instructions = document.getElementById("step1Instructions");
+const step2Title = document.getElementById("step2Title");
+const step2Instructions = document.getElementById("step2Instructions");
+const step3Title = document.getElementById("step3Title");
+const step3Instructions = document.getElementById("step3Instructions");
+const step4Title = document.getElementById("step4Title");
+const step4Instructions = document.getElementById("step4Instructions");
+const step5Title = document.getElementById("step5Title");
+const step5Instructions = document.getElementById("step5Instructions");
+const step6Title = document.getElementById("step6Title");
+const step6Instructions = document.getElementById("step6Instructions");
+const importInstructionButtons = document.querySelectorAll(".toggle-instructions button");
+const instructionsContent = document.querySelectorAll(".instructions-content");
+const generateScheduleBtn = document.getElementById("generateScheduleBtn");
+
+// === Initial Setup - Show Welcome Modal ===
+document.addEventListener("DOMContentLoaded", () => {
+    loadState();
+    if (userName && userSchool && userRole) {
+        welcomeModal.classList.remove("show");
+        mainContent.style.display = 'block';
+        updatePageForRole();
+    } else {
+        welcomeModal.classList.add("show");
+        step1Content.classList.add("active");
+        if (userName) {
+            document.getElementById("userName").value = userName;
+        }
+    }
+});
+
+// === Helper function for selection boxes ===
+function handleSelection(container, nextButton, callback) {
+    let selectedValue = "";
+    const boxes = container.querySelectorAll(".clickable-box");
+
+    boxes.forEach(box => {
+        box.addEventListener("click", () => {
+            boxes.forEach(b => b.classList.remove("selected"));
+            box.classList.add("selected");
+            selectedValue = box.dataset.value;
+            nextButton.disabled = false;
+            if (callback) callback(selectedValue);
+        });
+    });
+
+    return () => selectedValue;
+}
+
+const getSelectedSchool = handleSelection(schoolSelectionDiv, step2NextBtn, (value) => {
+    userSchool = value;
+    saveState();
+});
+const getSelectedRole = handleSelection(roleSelectionDiv, step3NextBtn, (value) => {
+    userRole = value;
+    saveState();
+});
+
+// Initially disable next buttons until a selection is made
+step2NextBtn.disabled = true;
+step3NextBtn.disabled = true;
+
+// === Form Submission Handlers ===
+step1Form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    userName = document.getElementById("userName").value.trim();
+    saveState();
+    step1Content.classList.remove("active");
+    setTimeout(() => {
+        step2Content.classList.add("active");
+        if (userSchool) {
+            const schoolBox = document.querySelector(`[data-value="${userSchool}"]`);
+            if (schoolBox) {
+                schoolBox.classList.add('selected');
+                step2NextBtn.disabled = false;
+            }
+        }
+    }, 500);
+});
+
+step2NextBtn.addEventListener("click", () => {
+    userSchool = getSelectedSchool();
+    step2Content.classList.remove("active");
+    setTimeout(() => {
+        if (["SAA (Secondary)", "MHS", "LTM"].includes(userSchool)) {
+            step3Content.classList.add("active");
+            if (userRole) {
+                const roleBox = document.querySelector(`[data-value="${userRole}"]`);
+                if (roleBox) {
+                    roleBox.classList.add('selected');
+                    step3NextBtn.disabled = false;
+                }
+            }
+        } else {
+            step2WIPContent.classList.add("active");
+        }
+    }, 500);
+});
+
+step2BackBtn.addEventListener("click", () => {
+    step2Content.classList.remove("active");
+    setTimeout(() => {
+        step1Content.classList.add("active");
+    }, 500);
+});
+
+step2WIPBackBtn.addEventListener("click", () => {
+    step2WIPContent.classList.remove("active");
+    setTimeout(() => {
+        step2Content.classList.add("active");
+    }, 500);
+});
+
+
+step3NextBtn.addEventListener("click", () => {
+    userRole = getSelectedRole();
+    if (userRole) {
+        welcomeModal.classList.remove("show");
+        setTimeout(() => {
+            mainContent.classList.remove("hidden");
+            mainContent.style.display = 'block';
+            updatePageForRole();
+            renderTemplateTable();
+        }, 500);
+    }
+});
+
+step3BackBtn.addEventListener("click", () => {
+    step3Content.classList.remove("active");
+    setTimeout(() => {
+        step2Content.classList.add("active");
+    }, 500);
+});
+
+mainGoBackBtn.addEventListener("click", () => {
+    mainContent.classList.add("hidden");
+    mainContent.style.display = 'none';
+    welcomeModal.classList.add("show");
+    step3Content.classList.remove("active");
+    step2WIPContent.classList.remove("active");
+    step2Content.classList.remove("active");
+    step1Content.classList.add("active");
+    step2NextBtn.disabled = true;
+    step3NextBtn.disabled = true;
+});
+
+// === Group Management Logic ===
+addGroupBtn.addEventListener("click", () => {
+    const groupName = newGroupInput.value.trim();
+    if (groupName && !groups.includes(groupName)) {
+        groups.push(groupName);
+        newGroupInput.value = "";
+        saveState();
+        renderGroups();
+        renderTemplateTable();
+    }
+});
+
+function renderGroups() {
+    groupListDiv.innerHTML = "";
+    groups.forEach(group => {
+        const tag = document.createElement("div");
+        tag.className = "group-tag";
+        tag.innerHTML = `<span>${group}</span><button onclick="removeGroup('${group}')">×</button>`;
+        groupListDiv.appendChild(tag);
+    });
+}
+
+function removeGroup(groupName) {
+    const index = groups.indexOf(groupName);
+    if (index > -1) {
+        groups.splice(index, 1);
+        saveState();
+        renderGroups();
+        renderTemplateTable();
+    }
+}
+
+function createDropdown(options, selectedValue) {
+    const select = document.createElement("select");
+    const blankOption = document.createElement("option");
+    blankOption.value = "";
+    blankOption.textContent = "";
+    select.appendChild(blankOption);
+
+    options.forEach(optionText => {
+        const option = document.createElement("option");
+        option.value = optionText;
+        option.textContent = optionText;
+        if (optionText === selectedValue) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+    return select;
+}
+
+function renderTemplateTable() {
+    templateHead.innerHTML = "";
+    templateBody.innerHTML = "";
+
+    const schoolSchedule = getSchoolSchedule(userSchool);
+    const visibleColumns = schoolSchedule.visibleColumns;
+    const dropdownColumns = schoolSchedule.dropdownColumns;
+    const cycleLength = schoolSchedule.cycleLength;
+
+    // Create header row
+    const headerRow = document.createElement("tr");
+    const dayHeader = document.createElement("th");
+    dayHeader.textContent = schoolSchedule.cycleLength === 5 ? "Day of Week" : "Cycle Day";
+    headerRow.appendChild(dayHeader);
+
+    visibleColumns.forEach(colName => {
+        const th = document.createElement("th");
+        th.textContent = colName;
+        th.dataset.colname = colName;
+        headerRow.appendChild(th);
+    });
+    templateHead.appendChild(headerRow);
+    
+    for(let i = 0; i < cycleLength; i++) {
+        const row = document.createElement("tr");
+        const dayCell = document.createElement("td");
+        dayCell.textContent = schoolSchedule.cycleLength === 5 ? getDayName(i) : i + 1;
+        row.appendChild(dayCell);
+
+        visibleColumns.forEach((colName, colIndex) => {
+            const cell = document.createElement("td");
+            cell.dataset.colname = colName;
+            
+            let inputElement;
+            const savedValue = (templateSchedule[i] && templateSchedule[i][colIndex]) ? templateSchedule[i][colIndex].value : "";
+            
+            if (dropdownColumns.includes(colName)) {
+                inputElement = createDropdown(groups, savedValue);
+            } else {
+                inputElement = document.createElement("input");
+                inputElement.type = "text";
+                inputElement.placeholder = colName;
+                inputElement.value = savedValue;
+            }
+            
+            inputElement.addEventListener('input', (event) => {
+                const updatedValue = event.target.value.trim();
+                if (!templateSchedule[i]) {
+                    templateSchedule[i] = [];
+                }
+                templateSchedule[i][colIndex] = { colName: colName, value: updatedValue };
+                saveState();
+            });
+            
+            cell.appendChild(inputElement);
+            row.appendChild(cell);
+        });
+        
+        templateBody.appendChild(row);
+    }
+}
+
+function getDayName(index) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    return days[index];
+}
+
+function getSchoolSchedule(schoolName) {
+    if (schoolName === "MHS") {
+        const studentPeriods = ["Period 1", "Period 2", "Period 3", "Lunch", "Period 4", "Period 5", "Period 6"];
+        const teacherPeriods = ["Morning Supervision", "Period 1", "Period 2", "Period 3", "Lunch", "Supervision", "Period 4", "Period 5", "Period 6", "Supervision"];
+        return {
+            cycleLength: 5,
+            visibleColumns: userRole === "student" ? studentPeriods : teacherPeriods,
+            dropdownColumns: ["Period 1", "Period 2", "Period 3", "Period 4", "Period 5", "Period 6"]
+        };
+    } else if (schoolName === "LTM") {
+        const periods = ["Warning Bell", "Period 1", "Recess 1", "Period 2", "Recess 2", "Period 3", "Lunch", "Period 4"];
+        return {
+            cycleLength: 9,
+            visibleColumns: periods,
+            dropdownColumns: ["Period 1", "Period 2", "Period 3", "Period 4"]
+        };
+    } else { // SAA (Secondary)
+        const studentPeriods = ["Period 1", "Period 2", "Short Lunch", "Period 3", "Long Lunch/ECA", "Period 4"];
+        const teacherPeriods = ["AM Supervision", "Period 1", "Break", "Period 2", "Short Lunch", "Period 3", "Long Lunch/ECA", "Transition", "Period 4", "PM Supervision"];
+        return {
+            cycleLength: 9,
+            visibleColumns: userRole === "student" ? studentPeriods : teacherPeriods,
+            dropdownColumns: ["Period 1", "Period 2", "Period 3", "Period 4"]
+        };
+    }
+}
+
+function getBellSchedule(schoolName) {
+    if (schoolName === "MHS") {
+        return mhsBellSchedule;
+    } else if (schoolName === "LTM") {
+        return ltmBellTimes;
+    } else {
+        return saaBellTimes;
+    }
+}
+
+
+// === SAA School year data ===
+const saaSchoolYearData = [
+    ["2025-08-25","PD","Teachers' first day"],
+    ["2025-08-26","PD","Boardwide"],
+    ["2025-08-27","PD","Boardwide"],
+    ["2025-08-28","Instructional","Students' first day"],
+    ["2025-08-29","Instructional",""],
+    ["2025-09-01","Holiday","Labour Day"],
+    ["2025-09-02","Instructional",""],
+    ["2025-09-03","Instructional",""],
+    ["2025-09-04","Instructional",""],
+    ["2025-09-05","Instructional",""],
+    ["2025-09-08","Instructional",""],
+    ["2025-09-09","Instructional",""],
+    ["2025-09-10","Instructional",""],
+    ["2025-09-11","Instructional","AGA & Curriculum Night"],
+    ["2025-09-12","PD","Boardwide"],
+    ["2025-09-15","Instructional",""],
+    ["2025-09-16","Instructional",""],
+    ["2025-09-17","Instructional",""],
+    ["2025-09-18","Instructional",""],
+    ["2025-09-19","Instructional",""],
+    ["2025-09-22","Instructional",""],
+    ["2025-09-23","Instructional",""],
+    ["2025-09-24","Instructional",""],
+    ["2025-09-25","Instructional",""],
+    ["2025-09-26","Instructional",""],
+    ["2025-09-29","Instructional",""],
+    ["2025-09-30","Instructional",""],
+    ["2025-10-01","Instructional",""],
+    ["2025-10-02","Instructional",""],
+    ["2025-10-03","Instructional",""],
+    ["2025-10-06","Instructional",""],
+    ["2025-10-07","Instructional",""],
+    ["2025-10-08","Instructional",""],
+    ["2025-10-09","Instructional",""],
+    ["2025-10-10","PD","Boardwide"],
+    ["2025-10-13","Holiday","Thanksgiving"],
+    ["2025-10-14","Instructional",""],
+    ["2025-10-15","Instructional","First Communication"],
+    ["2025-10-16","Instructional",""],
+    ["2025-10-17","Instructional",""],
+    ["2025-10-20","Instructional",""],
+    ["2025-10-21","Instructional",""],
+    ["2025-10-22","Instructional",""],
+    ["2025-10-23","Instructional",""],
+    ["2025-10-24","Instructional",""],
+    ["2025-10-27","Instructional",""],
+    ["2025-10-28","Instructional",""],
+    ["2025-10-29","Instructional",""],
+    ["2025-10-30","Instructional",""],
+    ["2025-10-31","Instructional",""],
+    ["2025-11-03","Instructional",""],
+    ["2025-11-04","Instructional",""],
+    ["2025-11-05","Instructional",""],
+    ["2025-11-06","Instructional",""],
+    ["2025-11-07","Instructional","End of Term 1"],
+    ["2025-11-10","Instructional",""],
+    ["2025-11-11","Instructional",""],
+    ["2025-11-12","Instructional",""],
+    ["2025-11-13","Instructional",""],
+    ["2025-11-14","Instructional",""],
+    ["2025-11-17","Instructional",""],
+    ["2025-11-18","Instructional",""],
+    ["2025-11-19","Instructional",""],
+    ["2025-11-20","Instructional","1st Parent Night"],
+    ["2025-11-21","PD","Boardwide"],
+    ["2025-11-24","Instructional",""],
+    ["2025-11-25","Instructional",""],
+    ["2025-11-26","Instructional",""],
+    ["2025-11-27","Instructional",""],
+    ["2025-11-28","Instructional",""],
+    ["2025-12-01","Instructional",""],
+    ["2025-12-02","Instructional",""],
+    ["2025-12-03","Instructional",""],
+    ["2025-12-04","Instructional",""],
+    ["2025-12-05","PD","Boardwide"],
+    ["2025-12-08","Instructional",""],
+    ["2025-12-09","Instructional",""],
+    ["2025-12-10","Instructional",""],
+    ["2025-12-11","Instructional",""],
+    ["2025-12-12","Instructional",""],
+    ["2025-12-15","Instructional",""],
+    ["2025-12-16","Instructional",""],
+    ["2025-12-17","Instructional",""],
+    ["2025-12-18","Instructional",""],
+    ["2025-12-19","Instructional",""],
+    ["2025-12-22","Break","Christmas Break"],
+    ["2025-12-23","Break","Christmas Break"],
+    ["2025-12-24","Break","Christmas Break"],
+    ["2025-12-25","Holiday","Christmas"],
+    ["2025-12-26","Holiday","Boxing Day"],
+    ["2025-12-29","Break","Christmas Break"],
+    ["2025-12-30","Break","Christmas Break"],
+    ["2025-12-31","Break","Christmas Break"],
+    ["2026-01-01","Holiday","New Year's Day"],
+    ["2026-01-02","Break","Christmas Break"],
+    ["2026-01-05","PD","Boardwide"],
+    ["2026-01-06","Instructional",""],
+    ["2026-01-07","Instructional",""],
+    ["2026-01-08","Instructional",""],
+    ["2026-01-09","Instructional",""],
+    ["2026-01-12","Instructional",""],
+    ["2026-01-13","Instructional",""],
+    ["2026-01-14","Instructional",""],
+    ["2026-01-15","Instructional",""],
+    ["2026-01-16","Instructional",""],
+    ["2026-01-19","Instructional",""],
+    ["2026-01-20","Instructional",""],
+    ["2026-01-21","Instructional",""],
+    ["2026-01-22","Instructional",""],
+    ["2026-01-23","Instructional",""],
+    ["2026-01-26","PD","Boardwide"],
+    ["2026-01-27","Instructional",""],
+    ["2026-01-28","Instructional",""],
+    ["2026-01-29","Instructional",""],
+    ["2026-01-30","Instructional",""],
+    ["2026-02-02","Instructional",""],
+    ["2026-02-03","Instructional",""],
+    ["2026-02-04","Instructional",""],
+    ["2026-02-05","Instructional",""],
+    ["2026-02-06","Instructional",""],
+    ["2026-02-09","Instructional",""],
+    ["2026-02-10","Instructional",""],
+    ["2026-02-11","Instructional",""],
+    ["2026-02-12","Instructional","End of Term 2"],
+    ["2026-02-13","PD","Boardwide"],
+    ["2026-02-16","Instructional",""],
+    ["2026-02-17","Instructional",""],
+    ["2026-02-18","Instructional",""],
+    ["2026-02-19","Instructional",""],
+    ["2026-02-20","Instructional",""],
+    ["2026-02-23","PD","Contingency"],
+    ["2026-02-24","Instructional",""],
+    ["2026-02-25","Instructional",""],
+    ["2026-02-26","Instructional","2nd Parent Night"],
+    ["2026-02-27","Instructional",""],
+    ["2026-03-02","Break","Winter Break"],
+    ["2026-03-03","Break","Winter Break"],
+    ["2026-03-04","Break","Winter Break"],
+    ["2026-03-05","Break","Winter Break"],
+    ["2026-03-06","Break","Winter Break"],
+    ["2026-03-09","PD","Boardwide"],
+    ["2026-03-10","Instructional",""],
+    ["2026-03-11","Instructional",""],
+    ["2026-03-12","Instructional",""],
+    ["2026-03-13","Instructional",""],
+    ["2026-03-16","Instructional",""],
+    ["2026-03-17","Instructional",""],
+    ["2026-03-18","Instructional",""],
+    ["2026-03-19","Instructional",""],
+    ["2026-03-20","Instructional",""],
+    ["2026-03-23","Instructional",""],
+    ["2026-03-24","Instructional",""],
+    ["2026-03-25","Instructional",""],
+    ["2026-03-26","Instructional",""],
+    ["2026-03-27","PD","Contingency"],
+    ["2026-03-30","Instructional",""],
+    ["2026-03-31","Instructional",""],
+    ["2026-04-01","Instructional",""],
+    ["2026-04-02","Instructional",""],
+    ["2026-04-03","Holiday","Easter Break"],
+    ["2026-04-06","Holiday","Easter Break"],
+    ["2026-04-07","PD","Contingency"],
+    ["2026-04-08","Instructional",""],
+    ["2026-04-09","Instructional",""],
+    ["2026-04-10","Instructional",""],
+    ["2026-04-13","Instructional",""],
+    ["2026-04-14","Instructional",""],
+    ["2026-04-15","Instructional",""],
+    ["2026-04-16","Instructional",""],
+    ["2026-04-17","Instructional",""],
+    ["2026-04-20","Instructional",""],
+    ["2026-04-21","Instructional",""],
+    ["2026-04-22","Instructional",""],
+    ["2026-04-23","Instructional",""],
+    ["2026-04-24","PD","Boardwide"],
+    ["2026-04-27","Instructional",""],
+    ["2026-04-28","Instructional",""],
+    ["2026-04-29","Instructional",""],
+    ["2026-04-30","Instructional",""],
+    ["2026-05-01","Instructional",""],
+    ["2026-05-04","Instructional",""],
+    ["2026-05-05","Instructional",""],
+    ["2026-05-06","Instructional",""],
+    ["2026-05-07","Instructional",""],
+    ["2026-05-08","Instructional",""],
+    ["2026-05-11","Instructional",""],
+    ["2026-05-12","Instructional",""],
+    ["2026-05-13","Instructional",""],
+    ["2026-05-14","Instructional",""],
+    ["2026-05-15","PD","Boardwide"],
+    ["2026-05-18","Holiday","National Patriot's Day"],
+    ["2026-05-19","Instructional",""],
+    ["2026-05-20","Instructional",""],
+    ["2026-05-21","Instructional",""],
+    ["2026-05-22","Instructional",""],
+    ["2026-05-25","Instructional",""],
+    ["2026-05-26","Instructional",""],
+    ["2026-05-27","Instructional",""],
+    ["2026-05-28","Instructional",""],
+    ["2026-05-29","Instructional",""],
+    ["2026-06-01","Instructional",""],
+    ["2026-06-02","Instructional",""],
+    ["2026-06-03","Instructional",""],
+    ["2026-06-04","Instructional",""],
+    ["2026-06-05","Instructional",""],
+    ["2026-06-08","Instructional",""],
+    ["2026-06-09","Instructional",""],
+    ["2026-06-10","Instructional",""],
+    ["2026-06-11","Instructional",""],
+    ["2026-06-12","Instructional",""],
+    ["2026-06-15","Instructional",""],
+    ["2026-06-16","Instructional",""],
+    ["2026-06-17","Instructional",""],
+    ["2026-06-18","Instructional",""],
+    ["2026-06-19","Instructional",""],
+    ["2026-06-22","Instructional","Students' last day"],
+    ["2026-06-23","PD","Boardwide"],
+    ["2026-06-24","Holiday","Québec's National Day"],
+    ["2026-06-25","PD","Boardwide"],
+    ["2026-06-26","PD","Boardwide"],
+    ["2026-06-29","PD","Boardwide"],
+    ["2026-06-30","PD","Teachers' last day"]
+];
+
+
+const ltmSchoolYearData = [
+    ["2025-08-26", "PD", "Board Assigned - August 26-29, 2025"],
+    ["2025-08-27", "PD", "Board Assigned"],
+    ["2025-08-28", "PD", "Board Assigned"],
+    ["2025-08-29", "PD", "Board Assigned"],
+    ["2025-09-01", "Holiday", "Labour Day"],
+    ["2025-09-02", "Instructional", "First day of School"],
+    ["2025-09-03", "Instructional", ""],
+    ["2025-09-04", "Instructional", ""],
+    ["2025-09-05", "Instructional", ""],
+    ["2025-09-08", "Instructional", ""],
+    ["2025-09-09", "Instructional", ""],
+    ["2025-09-10", "Instructional", ""],
+    ["2025-09-11", "Instructional", ""],
+    ["2025-09-12", "Instructional", ""],
+    ["2025-09-15", "Instructional", ""],
+    ["2025-09-16", "Instructional", ""],
+    ["2025-09-17", "Instructional", ""],
+    ["2025-09-18", "Instructional", ""],
+    ["2025-09-19", "PD", "Board Wide"],
+    ["2025-09-22", "Instructional", ""],
+    ["2025-09-23", "Instructional", ""],
+    ["2025-09-24", "Instructional", ""],
+    ["2025-09-25", "Instructional", "Photo Day"],
+    ["2025-09-26", "Instructional", ""],
+    ["2025-09-29", "Instructional", ""],
+    ["2025-09-30", "Instructional", ""],
+    ["2025-10-01", "Instructional", ""],
+    ["2025-10-02", "Instructional", "Graduation Ceremony for 2025"],
+    ["2025-10-03", "PD", "Board Assigned"],
+    ["2025-10-06", "Instructional", ""],
+    ["2025-10-07", "Instructional", ""],
+    ["2025-10-08", "Instructional", ""],
+    ["2025-10-09", "Instructional", ""],
+    ["2025-10-10", "Instructional", ""],
+    ["2025-10-13", "Holiday", "Thanksgiving"],
+    ["2025-10-14", "Instructional", ""],
+    ["2025-10-15", "Instructional", "1st Communication to parent"],
+    ["2025-10-16", "Instructional", "Grad Photo and Retakes Day"],
+    ["2025-10-17", "Instructional", ""],
+    ["2025-10-20", "Instructional", ""],
+    ["2025-10-21", "Instructional", ""],
+    ["2025-10-22", "Instructional", ""],
+    ["2025-10-23", "Instructional", ""],
+    ["2025-10-24", "Instructional", ""],
+    ["2025-10-27", "Instructional", ""],
+    ["2025-10-28", "Instructional", ""],
+    ["2025-10-29", "Instructional", ""],
+    ["2025-10-30", "Instructional", "Open House"],
+    ["2025-10-31", "Instructional", ""],
+    ["2025-11-03", "Instructional", ""],
+    ["2025-11-04", "Instructional", ""],
+    ["2025-11-05", "Instructional", ""],
+    ["2025-11-06", "Instructional", "End of Term 1"],
+    ["2025-11-07", "PD", "Board Wide QPAT"],
+    ["2025-11-10", "Instructional", ""],
+    ["2025-11-11", "Instructional", ""],
+    ["2025-11-12", "Instructional", ""],
+    ["2025-11-13", "Instructional", ""],
+    ["2025-11-14", "Instructional", ""],
+    ["2025-11-17", "Instructional", ""],
+    ["2025-11-18", "Instructional", ""],
+    ["2025-11-19", "Instructional", ""],
+    ["2025-11-20", "Instructional", "Term 1 Report Cards"],
+    ["2025-11-21", "Instructional", ""],
+    ["2025-11-24", "Instructional", ""],
+    ["2025-11-25", "Instructional", ""],
+    ["2025-11-26", "Instructional", ""],
+    ["2025-11-27", "Instructional", "Parent/Teacher Night Term 1"],
+    ["2025-11-28", "PD", "LTM only"],
+    ["2025-12-01", "Instructional", ""],
+    ["2025-12-02", "Instructional", ""],
+    ["2025-12-03", "Instructional", ""],
+    ["2025-12-04", "Instructional", ""],
+    ["2025-12-05", "Instructional", ""],
+    ["2025-12-08", "Instructional", ""],
+    ["2025-12-09", "Instructional", ""],
+    ["2025-12-10", "Instructional", ""],
+    ["2025-12-11", "Instructional", ""],
+    ["2025-12-12", "Instructional", ""],
+    ["2025-12-15", "Instructional", "Gray Day - Student's Presence for Exams/Exam Review"],
+    ["2025-12-16", "Instructional", "Gray Day - Student's Presence for Exams/Exam Review"],
+    ["2025-12-17", "Instructional", "Gray Day - Student's Presence for Exams/Exam Review"],
+    ["2025-12-18", "Instructional", "Gray Day - Student's Presence for Exams/Exam Review"],
+    ["2025-12-19", "Instructional", ""],
+    ["2025-12-22", "Break", "Christmas Break"],
+    ["2025-12-23", "Break", "Christmas Break"],
+    ["2025-12-24", "Break", "Christmas Break"],
+    ["2025-12-25", "Holiday", "Christmas"],
+    ["2025-12-26", "Holiday", "Boxing Day"],
+    ["2025-12-29", "Break", "Christmas Break"],
+    ["2025-12-30", "Break", "Christmas Break"],
+    ["2025-12-31", "Break", "Christmas Break"],
+    ["2026-01-01", "Holiday", "New Year's Day"],
+    ["2026-01-02", "Break", "Christmas Break"],
+    ["2026-01-05", "PD", "Board Assigned"],
+    ["2026-01-06", "Instructional", ""],
+    ["2026-01-07", "Instructional", ""],
+    ["2026-01-08", "Instructional", ""],
+    ["2026-01-09", "Instructional", ""],
+    ["2026-01-12", "Instructional", ""],
+    ["2026-01-13", "Instructional", ""],
+    ["2026-01-14", "Instructional", ""],
+    ["2026-01-15", "Instructional", ""],
+    ["2026-01-16", "Instructional", ""],
+    ["2026-01-19", "Instructional", ""],
+    ["2026-01-20", "Instructional", ""],
+    ["2026-01-21", "Instructional", ""],
+    ["2026-01-22", "Instructional", ""],
+    ["2026-01-23", "Instructional", ""],
+    ["2026-01-26", "PD", "LTM only"],
+    ["2026-01-27", "Instructional", ""],
+    ["2026-01-28", "Instructional", ""],
+    ["2026-01-29", "Instructional", ""],
+    ["2026-01-30", "Instructional", "End of Term 2"],
+    ["2026-02-02", "Instructional", ""],
+    ["2026-02-03", "Instructional", ""],
+    ["2026-02-04", "Instructional", ""],
+    ["2026-02-05", "Instructional", ""],
+    ["2026-02-06", "PD", "LTM only"],
+    ["2026-02-09", "Instructional", ""],
+    ["2026-02-10", "Instructional", ""],
+    ["2026-02-11", "Instructional", ""],
+    ["2026-02-12", "Instructional", "Term 2 Report Cards"],
+    ["2026-02-13", "Instructional", ""],
+    ["2026-02-16", "PD", "Board Wide LCEEQ"],
+    ["2026-02-17", "Instructional", ""],
+    ["2026-02-18", "Instructional", ""],
+    ["2026-02-19", "Instructional", ""],
+    ["2026-02-20", "Instructional", ""],
+    ["2026-02-23", "Instructional", ""],
+    ["2026-02-24", "Instructional", ""],
+    ["2026-02-25", "Instructional", ""],
+    ["2026-02-26", "Instructional", "Parent/Teacher Night - Term 2"],
+    ["2026-02-27", "Instructional", ""],
+    ["2026-03-02", "Break", "Winter Break"],
+    ["2026-03-03", "Break", "Winter Break"],
+    ["2026-03-04", "Break", "Winter Break"],
+    ["2026-03-05", "Break", "Winter Break"],
+    ["2026-03-06", "Break", "Winter Break"],
+    ["2026-03-09", "Instructional", ""],
+    ["2026-03-10", "Instructional", ""],
+    ["2026-03-11", "Instructional", ""],
+    ["2026-03-12", "Instructional", ""],
+    ["2026-03-13", "Instructional", ""],
+    ["2026-03-16", "Instructional", ""],
+    ["2026-03-17", "Instructional", ""],
+    ["2026-03-18", "Instructional", ""],
+    ["2026-03-19", "Instructional", ""],
+    ["2026-03-20", "Instructional", ""],
+    ["2026-03-23", "Instructional", ""],
+    ["2026-03-24", "Instructional", ""],
+    ["2026-03-25", "Instructional", ""],
+    ["2026-03-26", "Instructional", ""],
+    ["2026-03-27", "Instructional", ""],
+    ["2026-03-30", "Instructional", ""],
+    ["2026-03-31", "Instructional", ""],
+    ["2026-04-01", "Instructional", ""],
+    ["2026-04-02", "Instructional", ""],
+    ["2026-04-03", "Holiday", "Easter Break"],
+    ["2026-04-06", "Holiday", "Easter Break"],
+    ["2026-04-07", "Instructional", ""],
+    ["2026-04-08", "Instructional", ""],
+    ["2026-04-09", "Instructional", ""],
+    ["2026-04-10", "Instructional", ""],
+    ["2026-04-13", "Instructional", ""],
+    ["2026-04-14", "Instructional", ""],
+    ["2026-04-15", "Instructional", ""],
+    ["2026-04-16", "Instructional", ""],
+    ["2026-04-17", "PD", "Board Assigned"],
+    ["2026-04-20", "Instructional", ""],
+    ["2026-04-21", "Instructional", ""],
+    ["2026-04-22", "Instructional", ""],
+    ["2026-04-23", "Instructional", ""],
+    ["2026-04-24", "PD", "LTM only - FLOATER 2"],
+    ["2026-04-27", "Instructional", ""],
+    ["2026-04-28", "Instructional", ""],
+    ["2026-04-29", "Instructional", ""],
+    ["2026-04-30", "Instructional", ""],
+    ["2026-05-01", "PD", "LTM only - FLOATER 3"],
+    ["2026-05-04", "Instructional", ""],
+    ["2026-05-05", "Instructional", ""],
+    ["2026-05-06", "Instructional", ""],
+    ["2026-05-07", "Instructional", ""],
+    ["2026-05-08", "PD", "LTM only - FLOATER 1"],
+    ["2026-05-11", "Instructional", "Gray Day - Student's Presence for Exams/Exam Review"],
+    ["2026-05-12", "Instructional", "Gray Day - Student's Presence for Exams/Exam Review"],
+    ["2026-05-13", "Instructional", "Gray Day - Student's Presence for Exams/Exam Review"],
+    ["2026-05-14", "Instructional", "Gray Day - Student's Presence for Exams/Exam Review"],
+    ["2026-05-15", "PD", "Board Wide"],
+    ["2026-05-18", "Holiday", "National Patriot's Day"],
+    ["2026-05-19", "Instructional", ""],
+    ["2026-05-20", "Instructional", ""],
+    ["2026-05-21", "Instructional", ""],
+    ["2026-05-22", "Instructional", ""],
+    ["2026-05-25", "Instructional", ""],
+    ["2026-05-26", "Instructional", ""],
+    ["2026-05-27", "Instructional", ""],
+    ["2026-05-28", "Instructional", ""],
+    ["2026-05-29", "Instructional", ""],
+    ["2026-06-01", "Instructional", ""],
+    ["2026-06-02", "Instructional", ""],
+    ["2026-06-03", "Instructional", ""],
+    ["2026-06-04", "Instructional", ""],
+    ["2026-06-05", "Instructional", ""],
+    ["2026-06-08", "Instructional", ""],
+    ["2026-06-09", "Instructional", ""],
+    ["2026-06-10", "Instructional", ""],
+    ["2026-06-11", "Instructional", ""],
+    ["2026-06-12", "Instructional", ""],
+    ["2026-06-15", "Instructional", ""],
+    ["2026-06-16", "Instructional", ""],
+    ["2026-06-17", "Instructional", ""],
+    ["2026-06-18", "Instructional", ""],
+    ["2026-06-19", "Instructional", ""],
+    ["2026-06-22", "Instructional", ""],
+    ["2026-06-23", "Instructional", ""],
+    ["2026-06-24", "Holiday", "Québec's National Day"],
+    ["2026-06-25", "PD", "Board Assigned"],
+    ["2026-06-26", "PD", "Board Assigned"],
+    ["2026-06-29", "PD", "Board Assigned"],
+    ["2026-06-30", "Instructional", "Teachers' last day"]
+];
+
+
+// === Generate full schedule ===
+let fullSchedule = [];
+const saaColumnNames = ["AM Supervision", "Period 1", "Break", "Period 2", "Short Lunch", "Period 3", "Long Lunch/ECA", "Transition", "Period 4", "PM Supervision"];
+const mhsColumnNames = ["Morning Supervision", "Period 1", "Period 2", "Period 3", "Lunch", "Supervision", "Period 4", "Period 5", "Period 6", "Supervision"];
+const ltmColumnNames = ["Warning Bell", "Period 1", "Recess 1", "Period 2", "Recess 2", "Period 3", "Lunch", "Period 4"];
+
+// Color management for classes
+const classColors = {};
+function getColorForClass(className) {
+    if (classColors[className]) {
+        return classColors[className];
+    }
+    let hash = 0;
+    for (let i = 0; i < className.length; i++) {
+        hash = className.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = hash % 360;
+    const s = 40 + (hash % 20);
+    const l = 85 + (hash % 10);
+    const color = `hsl(${h}, ${s}%, ${l}%)`;
+    classColors[className] = color;
+    return color;
+}
+
+function generateFullSchedule(){
+    fullSchedule = [];
+    let cycleIndex = 0;
+    const schoolSchedule = getSchoolSchedule(userSchool);
+    const visibleColumns = schoolSchedule.visibleColumns;
+    const bellSchedule = getBellSchedule(userSchool);
+    const schoolYearData = getSchoolYearData(userSchool);
+    const columnNames = getColumnNames(userSchool);
+
+    schoolYearData.forEach(day=>{
+        const dateStr = day[0];
+        const category = day[1];
+        const notes = day[2];
+        const dayOfWeek = new Date(dateStr + 'T12:00:00').toLocaleDateString("en-US",{weekday:"long"});
+        const isMHS = userSchool === "MHS";
+        const is9DayCycle = userSchool === "SAA (Secondary)" || userSchool === "LTM";
+
+        if(category==="Instructional"){
+            const cycleDay = isMHS ? dayOfWeek : (cycleIndex % 9) + 1;
+            const rowData = isMHS ? templateSchedule[getDayIndex(dayOfWeek)] : templateSchedule[cycleDay-1];
+            
+            fullSchedule.push({
+                date: dateStr,
+                dayOfWeek,
+                cycleDay: isMHS ? dayOfWeek.slice(0, 3) : cycleDay,
+                activity: isMHS ? "Instructional Day" : `Day ${cycleDay}`,
+                start: "",
+                end: "",
+                specialEvent: notes,
+                type:"instructional"
+            });
+            
+            visibleColumns.forEach(act => {
+                const colIndex = columnNames.indexOf(act);
+                const inputData = rowData && rowData[colIndex] ? rowData[colIndex] : null;
+
+                if (inputData && inputData.value) {
+                    let specialEventText = notes;
+                    let subjectName = "";
+
+                    if (act.includes("Period") || act.includes("Lunch") || act.includes("Recess") || act.includes("Warning Bell")) {
+                        specialEventText = inputData.value;
+                        subjectName = inputData.value;
+                    }
+
+                    fullSchedule.push({
+                        date: dateStr,
+                        dayOfWeek,
+                        cycleDay: isMHS ? dayOfWeek.slice(0, 3) : cycleDay,
+                        activity: act,
+                        start: bellSchedule[act][0],
+                        end: bellSchedule[act][1],
+                        specialEvent: specialEventText,
+                        subjectName: subjectName,
+                        type: "instructional"
+                    });
+                }
+            });
+            if (is9DayCycle) {
+                cycleIndex++;
+            }
+        } else {
+            const activityName = notes ? `${category} – ${notes}` : category;
+            fullSchedule.push({
+                date: dateStr,
+                dayOfWeek,
+                cycleDay: "",
+                activity: activityName,
+                start: "",
+                end: "",
+                specialEvent: notes,
+                type:"skipday"
+            });
+        }
+    });
+
+    renderFullSchedule();
+}
+
+function getDayIndex(dayOfWeek) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    return days.indexOf(dayOfWeek);
+}
+
+function getColumnNames(schoolName) {
+    if (schoolName === "MHS") {
+        return mhsColumnNames;
+    } else if (schoolName === "LTM") {
+        return ltmColumnNames;
+    } else {
+        return saaColumnNames;
+    }
+}
+
+function getSchoolYearData(schoolName) {
+    if (schoolName === "MHS") {
+        const dates = [];
+        const holidays = [
+            ["2025-07-01", "Holiday", "Canada Day"],
+            ["2025-09-01", "Holiday", "Labour Day"],
+            ["2025-10-13", "Holiday", "Thanksgiving"],
+            ["2025-12-25", "Holiday", "Christmas"],
+            ["2025-12-26", "Holiday", "Boxing Day"],
+            ["2026-01-01", "Holiday", "New Year's Day"],
+            ["2026-04-03", "Holiday", "Easter Break"],
+            ["2026-04-06", "Holiday", "Easter Break"],
+            ["2026-05-18", "Holiday", "National Patriot's Day"],
+            ["2026-06-24", "Holiday", "Québec's National Day"]
+        ];
+
+        const breaks = [
+            ["2025-12-22", "Break", "Christmas Break"],
+            ["2025-12-23", "Break", "Christmas Break"],
+            ["2025-12-24", "Break", "Christmas Break"],
+            ["2025-12-29", "Break", "Christmas Break"],
+            ["2025-12-30", "Break", "Christmas Break"],
+            ["2025-12-31", "Break", "Christmas Break"],
+            ["2026-01-02", "Break", "Christmas Break"],
+            ["2026-03-02", "Break", "Winter Break"],
+            ["2026-03-03", "Break", "Winter Break"],
+            ["2026-03-04", "Break", "Winter Break"],
+            ["2026-03-05", "Break", "Winter Break"],
+            ["2026-03-06", "Break", "Winter Break"]
+        ];
+
+        const pdDays = [
+            ["2025-08-26", "PD", "Teachers' first day"],
+            ["2025-08-27", "PD", "Boardwide"],
+            ["2025-08-28", "PD", "Boardwide"],
+            ["2025-08-29", "PD", "Boardwide"],
+            ["2025-10-03", "PD", "Boardwide"],
+            ["2025-11-07", "PD", "QPAT Conference"],
+            ["2026-01-05", "PD", "Daycares Closed"],
+            ["2026-02-16", "PD", "LCEEQ"],
+            ["2026-04-17", "PD", "Boardwide"],
+            ["2026-05-15", "PD", "Boardwide"],
+            ["2026-06-25", "PD", "Boardwide"],
+            ["2026-06-26", "PD", "Boardwide"],
+            ["2026-06-29", "PD", "Boardwide"],
+            ["2026-06-30", "PD", "Teachers' last day"]
+        ];
+
+        const studentFirstDay = "2025-09-02";
+        const studentLastDay = "2026-06-23";
+
+        let currentDate = new Date('2025-08-26T12:00:00');
+        const endDate = new Date('2026-06-30T12:00:00');
+
+        while (currentDate <= endDate) {
+            const dateStr = currentDate.toISOString().slice(0, 10);
+            const dayOfWeek = currentDate.getDay();
+            const holiday = holidays.find(d => d[0] === dateStr);
+            const breakDay = breaks.find(d => d[0] === dateStr);
+            const pdDay = pdDays.find(d => d[0] === dateStr);
+
+            if (holiday) {
+                dates.push(holiday);
+            } else if (breakDay) {
+                dates.push(breakDay);
+            } else if (pdDay) {
+                dates.push(pdDay);
+            } else if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                let notes = "";
+                if (dateStr === studentFirstDay) {
+                    notes = "Students' first day";
+                } else if (dateStr === studentLastDay) {
+                    notes = "Students' last day";
+                }
+                dates.push([dateStr, "Instructional", notes]);
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return dates;
+    } else if (schoolName === "LTM") {
+        return ltmSchoolYearData;
+    } else {
+        return saaSchoolYearData;
+    }
+}
+
+
+// Event listener for MHS bell schedule input
+mhsBellTableBody.addEventListener('input', (event) => {
+    const input = event.target;
+    if (input.type === "time") {
+        const blockName = input.closest('tr').querySelector('td').textContent.trim();
+        const inputType = input.dataset.time;
+        if (!mhsBellSchedule[blockName]) {
+            mhsBellSchedule[blockName] = [];
+        }
+        if (inputType === 'start') {
+            mhsBellSchedule[blockName][0] = input.value;
+        } else {
+            mhsBellSchedule[blockName][1] = input.value;
+        }
+        saveState();
+    }
+});
+
+
+generateScheduleBtn.addEventListener("click", generateFullSchedule);
+
+
+function renderFullSchedule(){
+    fullScheduleTable.innerHTML = "";
+    fullSchedule.forEach(s=>{
+        const row = document.createElement("tr");
+        row.className = s.type;
+
+        const dateCell = document.createElement("td");
+        dateCell.textContent = s.date;
+        row.appendChild(dateCell);
+        
+        const dayOfWeekCell = document.createElement("td");
+        dayOfWeekCell.textContent = s.dayOfWeek;
+        row.appendChild(dayOfWeekCell);
+
+        const cycleDayCell = document.createElement("td");
+        cycleDayCell.textContent = s.cycleDay;
+        row.appendChild(cycleDayCell);
+        
+        const activityCell = document.createElement("td");
+        activityCell.textContent = s.activity;
+        row.appendChild(activityCell);
+        
+        const startCell = document.createElement("td");
+        startCell.textContent = s.start;
+        row.appendChild(startCell);
+
+        const endCell = document.createElement("td");
+        endCell.textContent = s.end;
+        row.appendChild(endCell);
+        
+        const specialEventCell = document.createElement("td");
+        specialEventCell.textContent = s.specialEvent;
+
+        if (s.subjectName) {
+            specialEventCell.classList.add('colored-cell');
+            specialEventCell.style.backgroundColor = getColorForClass(s.subjectName);
+        }
+
+        row.appendChild(specialEventCell);
+
+        fullScheduleTable.appendChild(row);
+    });
+}
+
+// === Export Functions ===
+function downloadFile(content, filename, type) {
+    const blob = new Blob([content], {type: type});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+}
+
+function convertToCsv(schedule) {
+    let csv = "Subject,Start Date,Start Time,End Date,End Time,Special Events\n";
+    schedule.forEach(s => {
+        let subject = s.subjectName || s.activity;
+        const specialEvent = s.specialEvent;
+        
+        if (s.date && s.start && s.end) {
+            const startDate = s.date;
+            const startTime = s.start;
+            const endDate = s.date;
+            const endTime = s.end;
+            csv += `"${subject}","${startDate}","${startTime}","${endDate}","${endTime}","${specialEvent}"\n`;
+        } else if (s.date) {
+            const startDate = s.date;
+            const specialEvent = s.specialEvent;
+            csv += `"${subject}","${startDate}","","","","${specialEvent}"\n`;
+        }
+    });
+    return csv;
+}
+
+function convertToIcs(schedule) {
+    let ics = "BEGIN:VCALENDAR\n";
+    ics += "VERSION:2.0\n";
+    ics += "PRODID:-//SWLSB Calendar Exporter//EN\n";
+    
+    schedule.forEach(s => {
+        const title = s.subjectName || s.activity;
+        const description = s.specialEvent || s.activity;
+        
+        if (s.date && s.start && s.end) {
+            const startDateTime = new Date(`${s.date}T${s.start}:00`);
+            const endDateTime = new Date(`${s.date}T${s.end}:00`);
+            const dtStart = startDateTime.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+            const dtEnd = endDateTime.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+            
+            ics += "BEGIN:VEVENT\n";
+            ics += `UID:${Date.now()}-${Math.random()}@swlsb.ca\n`;
+            ics += `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')}\n`;
+            ics += `DTSTART:${dtStart}\n`;
+            ics += `DTEND:${dtEnd}\n`;
+            ics += `SUMMARY:${title}\n`;
+            ics += `DESCRIPTION:${description}\n`;
+            ics += "END:VEVENT\n";
+
+        } else if (s.date) {
+            ics += "BEGIN:VEVENT\n";
+            ics += `UID:${Date.now()}-${Math.random()}@swlsb.ca\n`;
+            ics += `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')}\n`;
+            ics += `DTSTART;VALUE=DATE:${s.date.replace(/-/g, '')}\n`;
+            ics += `SUMMARY:${title}\n`;
+            ics += `DESCRIPTION:${description}\n`;
+            ics += "END:VEVENT\n";
+        }
+    });
+
+    ics += "END:VCALENDAR\n";
+    return ics;
+}
+
+document.getElementById("exportCsvMono").addEventListener("click", () => {
+    const csvContent = convertToCsv(fullSchedule);
+    downloadFile(csvContent, "SWLSB_Schedule_Single.csv", "text/csv");
+});
+
+document.getElementById("exportCsvMulti").addEventListener("click", () => {
+    const classSchedules = {};
+    const otherEvents = [];
+    
+    fullSchedule.forEach(s => {
+        if (s.subjectName) {
+            const className = s.subjectName;
+            if (!classSchedules[className]) {
+                classSchedules[className] = [];
+            }
+            classSchedules[className].push(s);
+        } else {
+            otherEvents.push(s);
+        }
+    });
+
+    for (const className in classSchedules) {
+        const csvContent = convertToCsv(classSchedules[className]);
+        downloadFile(csvContent, `SWLSB_Schedule_${className.replace(/ /g, '_')}.csv`, "text/csv");
+    }
+
+    if (otherEvents.length > 0) {
+        const csvContent = convertToCsv(otherEvents);
+        downloadFile(csvContent, "SWLSB_Schedule_Other_Events.csv", "text/csv");
+    }
+});
+
+document.getElementById("exportIcsMono").addEventListener("click", () => {
+    const icsContent = convertToIcs(fullSchedule);
+    downloadFile(icsContent, "SWLSB_Schedule_Single.ics", "text/calendar");
+});
+
+document.getElementById("exportIcsMulti").addEventListener("click", () => {
+    const classSchedules = {};
+    const otherEvents = [];
+    
+    fullSchedule.forEach(s => {
+        if (s.subjectName) {
+            const className = s.subjectName;
+            if (!classSchedules[className]) {
+                classSchedules[className] = [];
+            }
+            classSchedules[className].push(s);
+        } else {
+            otherEvents.push(s);
+        }
+    });
+
+    for (const className in classSchedules) {
+        const icsContent = convertToIcs(classSchedules[className]);
+        downloadFile(icsContent, `SWLSB_Schedule_${className.replace(/ /g, '_')}.ics`, "text/calendar");
+    }
+
+    if (otherEvents.length > 0) {
+        const icsContent = convertToIcs(otherEvents);
+        downloadFile(icsContent, "SWLSB_Schedule_Other_Events.ics", "text/calendar");
+    }
+});
+
+
+importInstructionButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        const calendar = button.dataset.calendar;
+        
+        instructionsContent.forEach(content => content.classList.add("hidden"));
+        importInstructionButtons.forEach(btn => btn.classList.remove("active"));
+        
+        document.getElementById(`${calendar}-instructions`).classList.remove("hidden");
+        button.classList.add("active");
+    });
+});
+
+function updatePageForRole() {
+    let cycleType = "9-day";
+    let groupLabel = "Subjects";
+    let groupPlaceholder = "e.g. English Sec 4";
+
+    if (userSchool === "MHS") {
+        cycleType = "Monday-to-Friday";
+        groupLabel = userRole === "student" ? "Subjects" : "Groups";
+        groupPlaceholder = userRole === "student" ? "e.g. English Sec 4" : "e.g. Science Sec 4A";
+        mhsBellScheduleDiv.classList.remove("hidden");
+        
+    } else {
+        mhsBellScheduleDiv.classList.add("hidden");
+    }
+    
+    if (userSchool === "LTM") {
+        groupLabel = "Subjects";
+        groupPlaceholder = "e.g. English Sec 4";
+    }
+
+    const welcomeText = `This tool helps you create a customizable calendar based on the <strong>${cycleType}</strong> cycle for the <strong>${schoolYear}</strong> school year. Follow the steps below to get started.`;
+    headerText.innerHTML = welcomeText;
+    
+    step1Title.innerHTML = `<strong>Step 1:</strong> Define Your ${groupLabel} 📝`;
+    step1Instructions.textContent = `Welcome, ${userName}! Enter your ${groupLabel.toLowerCase()} here. Click "Add ${groupLabel.slice(0, -1)}" to save them for the schedule input in the next step.`;
+    newGroupInput.placeholder = groupPlaceholder;
+    addGroupBtn.textContent = `Add ${groupLabel.slice(0, -1)}`;
+    step2Title.innerHTML = "<strong>Step 2:</strong> Input Your Schedule 📅";
+    step4Title.innerHTML = "<strong>Step 4:</strong> Export Options 📥";
+    step4Instructions.textContent = "Now that the schedule is generated, you can download the calendar events as a CSV or .ics file.";
+    step5Title.innerHTML = "<strong>Step 5:</strong> Import to Your Calendar ↗️";
+    step5Instructions.innerHTML = "Choose your preferred calendar application below to view the instructions for importing the file you just downloaded. We highly recommend creating a <strong>new, dedicated calendar</strong> for this schedule to avoid mixing it with your personal events.";
+    step6Title.innerHTML = "<strong>Step 6:</strong> Full Schedule Preview 🗓️";
+    
+    // Dynamically render bell schedule table for MHS
+    if (userSchool === "MHS") {
+        const mhsBellRows = getSchoolSchedule("MHS").visibleColumns;
+        mhsBellTableBody.innerHTML = '';
+        mhsBellRows.forEach(rowName => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${rowName}</td>
+                <td><input type="time" data-block="${rowName}" data-time="start"></td>
+                <td><input type="time" data-block="${rowName}" data-time="end"></td>
+            `;
+            mhsBellTableBody.appendChild(row);
+        });
+        
+        for (const block in mhsBellSchedule) {
+            const startInput = document.querySelector(`#mhsBellTable input[data-block="${block}"][data-time="start"]`);
+            const endInput = document.querySelector(`#mhsBellTable input[data-block="${block}"][data-time="end"]`);
+            if (startInput) startInput.value = mhsBellSchedule[block][0];
+            if (endInput) endInput.value = mhsBellSchedule[block][1];
+        }
+    }
+
+    renderGroups();
+}
+</script>
+</body>
+</html>
